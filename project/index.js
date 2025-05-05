@@ -70,6 +70,25 @@ function updateCanvas() {
   
 }
 
+function collisionCheck(newLine) {
+  for (let i = 0; i < lines.length; i++) {
+    let result = newLine.collidesWith(lines[i]);
+    if (result) {
+      collisionDots.push(result);
+      badLines.push(lines[i]);
+    }
+  } 
+  if (badLines.length > 0) {
+    badLines.push(newLine);
+    badLineTimer = 100;
+    drawAble = false;
+    return true;
+  } else {
+    lines.push(newLine);
+    return false;
+  }
+}
+
 function mouseClick(event) {
   let rect = c.getBoundingClientRect();
   let x = event.clientX - rect.left;
@@ -86,9 +105,14 @@ function mouseClick(event) {
     newLine.x2 = x;
     newLine.y2 = y;
 
-    lastClickX = x;
-    lastClickY = y;
-    lines.push(newLine);
+    
+
+    let didCollide = collisionCheck(newLine);
+
+    if (didCollide === false) {
+      lastClickX = x;
+      lastClickY = y;
+    }
   }
 }
 
@@ -144,19 +168,7 @@ finishButton.onclick = function() {
 
 
     // Checking for collisions
-    for (let i = 0; i < len; i++) {
-      let result = newLine.collidesWith(lines[i]);
-      if (result) {
-        collisionDots.push(result);
-        badLines.push(lines[i]);
-      }
-    } 
-    if (badLines.length > 0) {
-      badLines.push(newLine);
-      badLineTimer = 100;
-    } else {
-      lines.push(newLine);
-    }
+    collisionCheck(newLine);
     
 
     drawAble = false;
