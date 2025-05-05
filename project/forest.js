@@ -1,7 +1,3 @@
-export function hello() {
-  console.log("Hello");
-}
-
 export class Line {
   x1;
   y1;
@@ -70,6 +66,9 @@ export class Line {
   }
 }
 
+export function solveForest(lines) {
+  console.log("hello");
+}
 
 // function randRange(min, max) {
 //   let range = max - min;

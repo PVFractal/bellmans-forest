@@ -1,4 +1,4 @@
-import { Line } from './forest.js';
+import { Line, solveForest } from './forest.js';
 
 
 
@@ -155,6 +155,7 @@ setInterval(updateCanvas, 1);
 const finishButton = document.getElementById('done_button');
 const clearButton = document.getElementById('clear_button');
 const solveButton = document.getElementById('solve_button');
+solveButton.style.visibility = "hidden";
 
 finishButton.onclick = function() {
   let len = lines.length;
@@ -168,8 +169,11 @@ finishButton.onclick = function() {
 
 
     // Checking for collisions
-    collisionCheck(newLine);
+    let collided = collisionCheck(newLine);
     
+    if (!collided) {
+      solveButton.style.visibility = "";
+    }
 
     drawAble = false;
   } 
@@ -178,7 +182,10 @@ clearButton.onclick = function() {
   lines = [];
   lastClickX = -1;
   mouseLine.x1 = -1;
-
   drawAble = true;
+  solveButton.style.visibility = "hidden";
 }
 
+solveButton.onclick = function() {
+  solveForest(lines);
+}
