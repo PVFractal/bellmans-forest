@@ -1,3 +1,7 @@
+const POINTS_ON_LINES = 100;
+const EPSILON = 0.001;
+
+
 export class Line {
   x1;
   y1;
@@ -5,7 +9,7 @@ export class Line {
   x2;
   y2;
 
-  Line(x1, y1, x2, y2) {
+  constructor(x1, y1, x2, y2) {
     this.x1 = x1;
     this.y1 = y1;
     this.x2 = x2;
@@ -71,19 +75,61 @@ export class Line {
     return false;
 
   }
+
+  getPointAlongLine(percentage) {
+    let xDiff = this.x2 - this.x1;
+    let yDiff = this.y2 - this.y1;
+
+    let x = (xDiff * percentage) + this.x1;
+    let y = (yDiff * percentage) + this.y1;
+
+    return new Point(x, y);
+  }
 }
 
 export class Point {
   x
   y
-  Point(x, y) {
+  constructor(x, y) {
     this.x = x;
     this.y = y;
   }
 }
 
 export function solveForest(lines) {
-  console.log("hello");
+  points = getTestPoints(lines);
+  return points;
+}
+
+function getTestPoints(lines) {
+  let pointArray = [];
+
+  for (let i = 0; i < 1; i++) {
+    for (let p = 0; p <= POINTS_ON_LINES; p++) {
+      let percentage = p / POINTS_ON_LINES;
+
+      let pointOnLine = lines[i].getPointAlongLine(percentage);
+
+      console.log(pointOnLine);
+    }
+
+
+
+  }
+}
+
+function pointInsideLines(point, lines) {
+  let downLine = new Line(point.x, point.y, point.x, -100000);
+  let collisions = 0;
+  for (let i = 0; i < lines.length; i++) {
+    let result = downLine.collidesWith(lines[i]);
+    if (result !== false) {
+      collisions += 1;
+    }
+  }
+  // If the number of lines the downward line crossed was odd, that means it is inside the shape
+  // If it is even, that means it is outside the shape
+  return (collisions % 2) === 1;
 }
 
 // function randRange(min, max) {
