@@ -1,0 +1,43 @@
+
+#mainBody {
+  padding: 5px;
+  margin: 0;
+  background-color: rgb(227, 227, 227);
+}
+
+h1 {
+  font-family: 'Times New Roman', Times, serif;
+  font-size: 70px;
+  padding: 15px;
+  margin-top: 0;
+  color:rgb(0, 0, 0);
+}
+
+button {
+  font-size: 20px;
+  border-width: 3px;
+  border-color: rgb(19, 21, 63);
+  margin-bottom: 10px;
+}
+
+#mainContainer{
+  background-color: white;
+  display: flex;
+  gap: 30px;
+  padding: 30px;
+  border: 2px solid rgb(19, 21, 63);
+}
+
+#maincanvas {
+  background-color: white;
+  border: 2px solid rgb(19, 21, 63);
+}
+
+#controls {
+  display: block
+}
+
+p {
+  font-family: 'Times New Roman', Times, serif;
+  font-size: large;
+}
