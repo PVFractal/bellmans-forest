@@ -98,14 +98,7 @@ function mouseClick(event) {
     lastClickX = x;
     lastClickY= y;
   } else {
-    let newLine = new Line();
-    newLine.x1 = lastClickX;
-    newLine.y1 = lastClickY;
-
-    newLine.x2 = x;
-    newLine.y2 = y;
-
-    
+    let newLine = new Line(lastClickX, lastClickY, x, y);
 
     let didCollide = collisionCheck(newLine);
 
@@ -160,12 +153,7 @@ solveButton.style.visibility = "hidden";
 finishButton.onclick = function() {
   let len = lines.length;
   if (len > 1 && drawAble) {
-    let newLine = new Line();
-    newLine.x1 = lines[0].x1;
-    newLine.y1 = lines[0].y1;
-
-    newLine.x2 = lines[len-1].x2;
-    newLine.y2 = lines[len-1].y2;
+    let newLine = new Line(lines[0].x1, lines[0].y1, lines[len-1].x2, lines[len-1].y2);
 
 
     // Checking for collisions
