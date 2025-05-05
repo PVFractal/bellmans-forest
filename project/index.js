@@ -11,9 +11,13 @@ var ctx = c.getContext("2d");
 let width = c.getBoundingClientRect().width;
 let height = c.getBoundingClientRect().height;
 
+
+// Objects to draw
 let lines = [];
 let badLines = [];
 let collisionDots = [];
+let pixels = [];
+
 let badLineTimer = -1;
 
 let lastClickX = -1;
@@ -35,6 +39,13 @@ function drawPoint(x, y) {
   ctx.fill();
 }
 
+function drawPixel(p) {
+  ctx.beginPath();
+  ctx.arc(p.x, p.y, 1, 0, Math.PI*2, true);
+  ctx.closePath();
+  ctx.fill();
+}
+
 function updateCanvas() {
   ctx.rect(0, 0, width, height);
   ctx.fillStyle = "white";
@@ -48,11 +59,16 @@ function updateCanvas() {
     drawLine(mouseLine);
   }
 
+  ctx.fillStyle = "red";
+  ctx.strokeStyle = "red";
+  for (let i = 0; i < pixels.length; i++) {
+    drawPixel(pixels[i]);
+  }
+
+
   if (badLineTimer > 0) {
     badLineTimer -= 1;
 
-    ctx.strokeStyle = "red";
-    ctx.fillStyle = "red";
     for (let i = 0; i < badLines.length; i++) {
       drawLine(badLines[i]);
     }
@@ -107,8 +123,6 @@ function mouseClick(event) {
       lastClickY = y;
     }
   }
-
-  console.log(lines.length);
 }
 
 function mouseMove(event) {
@@ -177,5 +191,6 @@ clearButton.onclick = function() {
 }
 
 solveButton.onclick = function() {
-  solveForest(lines);
+  pixels = solveForest(lines);
+  console.log(pixels.length);
 }
