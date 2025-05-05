@@ -18,6 +18,11 @@ button {
   border-width: 3px;
   border-color: rgb(19, 21, 63);
   margin-bottom: 10px;
+  background-color: rgb(245, 245, 245);
+}
+
+button:hover {
+  background-color: rgb(210, 210, 210);
 }
 
 #mainContainer{
@@ -31,6 +36,10 @@ button {
 #maincanvas {
   background-color: white;
   border: 2px solid rgb(19, 21, 63);
+}
+
+#maincanvas:hover {
+  cursor: pointer;
 }
 
 #controls {

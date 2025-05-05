@@ -1,61 +1,172 @@
-import { hello } from './forest.js';
+import { Line } from './forest.js';
 
 
 
-// Canvas stuff: sparkles
+let drawAble = true;
+// Canvas stuff 
+
 var c = document.getElementById("maincanvas");
 var ctx = c.getContext("2d");
 
-// const sizeX = 20;
-// const sizeY = 40;
+let width = c.getBoundingClientRect().width;
+let height = c.getBoundingClientRect().height;
 
-// function drawSparkle(x, y, scale) {
-//   let width = sizeX * scale;
-//   let height = sizeY * scale;
-//   ctx.fillStyle = 'rgb(255,255,0)';
-//   ctx.beginPath();
-//   ctx.moveTo(x,y + height / 2);
-//   ctx.lineTo(x + width/2, y);
-//   ctx.lineTo(x, y - height / 2);
-//   ctx.lineTo(x - width/2, y);
-//   ctx.lineTo(x,y + height / 2);
-//   ctx.fill();
-// } 
+let lines = [];
+let badLines = [];
+let collisionDots = [];
+let badLineTimer = -1;
 
-// function randRange(min, max) {
-//   let range = max - min;
-//   return Math.floor(Math.random() * range) + min;
-// }
+let lastClickX = -1;
+let lastClickY = -1;
 
-// let sparkles = [];
+let mouseLine = new Line();
 
-// for (let i = 0; i < 20; i++) {
-//   let newSparkle = [randRange(40, c.width - 40), randRange(40, c.height - 40), Math.random()];
-//   sparkles.push(newSparkle);
-// }
+function drawLine(line) {
+  ctx.beginPath();
+  ctx.moveTo(line.x1, line.y1);
+  ctx.lineTo(line.x2, line.y2);
+  ctx.stroke();
+}
 
-// for (let i = 0; i < sparkles.length; i++) {
-//   console.log(sparkles[i]);
-//   drawSparkle(sparkles[i][0], sparkles[i][1], sparkles[i][2]);
-// }
+function drawPoint(x, y) {
+  ctx.beginPath();
+  ctx.arc(x, y, 5, 0, Math.PI*2, true);
+  ctx.closePath();
+  ctx.fill();
+}
 
-// let timer = 0;
-// const spakleSpeed = 100;
+function updateCanvas() {
+  ctx.rect(0, 0, width, height);
+  ctx.fillStyle = "white";
+  ctx.fill();
 
-// function draw() {
-//   ctx.clearRect(0, 0, c.width, c.height);
-//   timer += 1;
-//   for (let i = 0; i < sparkles.length; i++) {
-//     let sparkleScale = (Math.cos((sparkles[i][2] * 2 * Math.PI) + timer / spakleSpeed) + 1) / 2;
-//     drawSparkle(sparkles[i][0], sparkles[i][1], sparkleScale);
-//   }
-// }
-// setInterval(draw, 1);
+  ctx.strokeStyle = "black";
+  for (let i = 0; i < lines.length; i++) {
+    drawLine(lines[i]);
+  }
+  if (mouseLine.x1 > 0) {
+    drawLine(mouseLine);
+  }
 
+  if (badLineTimer > 0) {
+    badLineTimer -= 1;
+
+    ctx.strokeStyle = "red";
+    ctx.fillStyle = "red";
+    for (let i = 0; i < badLines.length; i++) {
+      drawLine(badLines[i]);
+    }
+
+    for (let i = 0; i < collisionDots.length; i++) {
+      drawPoint(collisionDots[i][0], collisionDots[i][1]);
+    }
+
+    if (badLineTimer === 0) {
+      drawAble = true;
+      badLines = [];
+      collisionDots = [];
+    }
+  }
+  
+}
+
+function mouseClick(event) {
+  let rect = c.getBoundingClientRect();
+  let x = event.clientX - rect.left;
+  let y = event.clientY - rect.top;
+
+  if (lastClickX < 0) {
+    lastClickX = x;
+    lastClickY= y;
+  } else {
+    let newLine = new Line();
+    newLine.x1 = lastClickX;
+    newLine.y1 = lastClickY;
+
+    newLine.x2 = x;
+    newLine.y2 = y;
+
+    lastClickX = x;
+    lastClickY = y;
+    lines.push(newLine);
+  }
+}
+
+function mouseMove(event) {
+  let rect = c.getBoundingClientRect();
+  let x = event.clientX - rect.left;
+  let y = event.clientY - rect.top;
+
+  mouseLine.x1 = lastClickX;
+  mouseLine.y1 = lastClickY;
+
+  mouseLine.x2 = x;
+  mouseLine.y2 = y;
+}
+
+c.addEventListener("mousedown", function (e) {
+  if (drawAble) {
+    mouseClick(e);
+  }
+});
+
+c.addEventListener("mousemove", function (e) {
+  if (drawAble) {
+    mouseMove(e);
+  }
+})
+
+c.addEventListener("mouseout", function (e) {
+  if (drawAble) {
+    mouseLine.x1 = -1;
+  }
+})
+
+
+
+// Keeping the canvas constantly updated
+setInterval(updateCanvas, 1);
 
 // HTML stuff
-const startButton = document.getElementById('done_button');
+const finishButton = document.getElementById('done_button');
+const clearButton = document.getElementById('clear_button');
+const solveButton = document.getElementById('solve_button');
 
-startButton.onclick = function() {
-  console.log('clicked');
+finishButton.onclick = function() {
+  let len = lines.length;
+  if (len > 1 && drawAble) {
+    let newLine = new Line();
+    newLine.x1 = lines[0].x1;
+    newLine.y1 = lines[0].y1;
+
+    newLine.x2 = lines[len-1].x2;
+    newLine.y2 = lines[len-1].y2;
+
+
+    // Checking for collisions
+    for (let i = 0; i < len; i++) {
+      let result = newLine.collidesWith(lines[i]);
+      if (result) {
+        collisionDots.push(result);
+        badLines.push(lines[i]);
+      }
+    } 
+    if (badLines.length > 0) {
+      badLines.push(newLine);
+      badLineTimer = 100;
+    } else {
+      lines.push(newLine);
+    }
+    
+
+    drawAble = false;
+  } 
 }
+clearButton.onclick = function() {
+  lines = [];
+  lastClickX = -1;
+  mouseLine.x1 = -1;
+
+  drawAble = true;
+}
+
