@@ -100,11 +100,6 @@ function mouseClick(event) {
   } else {
     let newLine = new Line(lastClickX, lastClickY, x, y);
 
-    console.log(newLine.x1);
-    console.log(newLine.y1);
-    console.log(newLine.x2);
-    console.log(newLine.y2);
-
     let didCollide = collisionCheck(newLine);
 
     if (didCollide === false) {
