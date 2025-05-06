@@ -1,4 +1,4 @@
-import { Line, solveForest } from './forest.js';
+import { Line, Runner } from './forest.js';
 
 
 
@@ -46,7 +46,32 @@ function drawPixel(p) {
   ctx.fill();
 }
 
+
+let iteration = -1;
 function updateCanvas() {
+
+  
+  if (iteration === 0) {
+    runnningText.textContent = "Running...";
+    genCounter.textContent = "Generation 1";
+  } else if (iteration === 1) {
+    forestSolver = new Runner(lines);
+    forestSolver.getPoints();
+    forestSolver.populateGeneration();
+    genCounter.textContent = "Generation 1";
+    pixels = forestSolver.runLoop();
+  } else if (iteration === 100) {
+    iteration = -1;
+  } else if (iteration > 1) {
+    pixels = forestSolver.runLoop();
+    genCounter.textContent = "Generation " + iteration;
+  }
+
+  if (iteration > -1) {
+    iteration += 1;
+  }
+
+
   ctx.rect(0, 0, width, height);
   ctx.fillStyle = "white";
   ctx.fill();
@@ -166,6 +191,13 @@ const clearButton = document.getElementById('clear_button');
 const solveButton = document.getElementById('solve_button');
 solveButton.style.visibility = "hidden";
 
+const runnningText = document.getElementById('running');
+runnningText.textContent = "";
+
+const genCounter = document.getElementById('genMarker');
+genCounter.textContent = "";
+
+
 finishButton.onclick = function() {
   let len = lines.length;
   if (len > 1 && drawAble) {
@@ -190,6 +222,7 @@ clearButton.onclick = function() {
   solveButton.style.visibility = "hidden";
 }
 
+let forestSolver;
 solveButton.onclick = function() {
-  pixels = solveForest(lines);
+  iteration = 0;
 }

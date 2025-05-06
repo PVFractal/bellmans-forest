@@ -5,8 +5,7 @@ const NUM_ANGLES = 200;
 const NUM_RAYCASTS = 5;
 
 
-// Can change by 18 degrees at most
-const MAX_CHANGE = Math.PI / 10;
+const MAX_CHANGE = Math.PI / 8;
 
 
 const EPSILON = 0.001;
@@ -127,25 +126,31 @@ export class Point {
   }
 }
 
-export function solveForest(lines) {
+export class Runner {
+  lines = [];
+  points = [];
 
-  // Getting the starting points for the paths
-  let points = getTestPoints(lines);
+  pathGeneration = [];
 
-  let pathGeneration = [];
-
-  // Starting the generation with these paths
-  pathGeneration.push(createZeroPath());
-  for (let i = 0; i < 6; i++) {
-    pathGeneration.push(createRandomPath());
+  constructor(lines) {
+    this.lines = lines;
   }
 
-  let results;
-  for (let i = 0; i < 10; i++) {
-    results = runGeneration(pathGeneration, points, lines);
+  getPoints() {
+    this.points = getTestPoints(this.lines);
   }
-  
-  return recordPath(results[2], results[1], results[0], lines);
+  populateGeneration() {
+    // Starting the generation with these paths
+    this.pathGeneration.push(createZeroPath());
+    for (let i = 0; i < 6; i++) {
+      this.pathGeneration.push(createRandomPath());
+    }
+  }
+  runLoop() {
+    let results = runGeneration(this.pathGeneration, this.points, this.lines);
+    this.pathGeneration = results[3];
+    return recordPath(results[2], results[1], results[0], this.lines);
+  }
 }
 
 function getTestPoints(lines) {
@@ -317,10 +322,14 @@ function runPath(startPoint, angle, path, lines) {
 
   let nextPoint = new Point(startPoint.x, startPoint.y);
   let distance = 0;
+
+  let previousAngle = angle;
   for (let p = 0; p < PATH_SEGMENTS; p++) {
 
-    let xDist = Math.cos(path[p] + angle) * SEGMENT_LENGTH;
-    let yDist = Math.sin(path[p] + angle) * SEGMENT_LENGTH;
+    let nextAngle = previousAngle + path[p];
+
+    let xDist = Math.cos(nextAngle) * SEGMENT_LENGTH;
+    let yDist = Math.sin(nextAngle) * SEGMENT_LENGTH;
 
     let nextX = nextPoint.x + xDist;
     let nextY = nextPoint.y + yDist;
@@ -345,10 +354,12 @@ function runPath(startPoint, angle, path, lines) {
     // If we have not reached the end of the forest, we need to count the distance
     distance += SEGMENT_LENGTH;
 
-    // Setting the next starting point
+    // Setting the next starting point and angle
 
     nextPoint.x = nextX;
     nextPoint.y = nextY;
+
+    previousAngle = nextAngle;
 
   } 
 
@@ -360,12 +371,16 @@ function recordPath(startPoint, angle, path, lines) {
   let pointList = [];
 
   let nextPoint = new Point(startPoint.x, startPoint.y);
+
+  let previousAngle = angle;
   for (let p = 0; p < PATH_SEGMENTS; p++) {
 
+    let nextAngle = previousAngle + path[p];
+
+    let xDist = Math.cos(nextAngle) * SEGMENT_LENGTH;
+    let yDist = Math.sin(nextAngle) * SEGMENT_LENGTH;
+
     pointList.push(new Point(nextPoint.x, nextPoint.y));
-    
-    let xDist = Math.cos(path[p] + angle) * SEGMENT_LENGTH;
-    let yDist = Math.sin(path[p] + angle) * SEGMENT_LENGTH;
 
     let nextX = nextPoint.x + xDist;
     let nextY = nextPoint.y + yDist;
@@ -378,9 +393,11 @@ function recordPath(startPoint, angle, path, lines) {
         return pointList;
       }
     }
-    // Setting the next starting point
+    // Setting the next starting point and angle
     nextPoint.x = nextX;
     nextPoint.y = nextY;
+
+    previousAngle = nextAngle;
 
   } 
 
@@ -406,7 +423,7 @@ function createZeroPath() {
 function createMutant(path) {
   let newPath = [];
   for (let i = 0; i < PATH_SEGMENTS; i++) {
-    let val = path[i] += randRange(-MAX_CHANGE, MAX_CHANGE);
+    let val = path[i] + randRange(-MAX_CHANGE, MAX_CHANGE);
     newPath.push(val);
   }
   return newPath;
@@ -456,17 +473,16 @@ function runGeneration(pathGeneration, points, lines) {
 
   newGeneration.push(bestPath);
 
-  let combinationPaths = crossPaths(bestPath, secondBestPath);
+  newGeneration.push(createMutant(bestPath));
+
+  let combinationPaths = crossPaths(newGeneration[0], newGeneration[1]);
   combinationPaths.forEach(path => {
     newGeneration.push(path);
   });
 
   newGeneration.push(createMutant(bestPath));
-  newGeneration.push(createMutant(bestPath));
 
-  pathGeneration = newGeneration;
-
-  return [bestPath, bestAngle, bestStartPoint];
+  return [bestPath, bestAngle, bestStartPoint, newGeneration];
 }
 
 function randRange(min, max) {
