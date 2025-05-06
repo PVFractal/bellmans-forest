@@ -149,7 +149,7 @@ export class Runner {
   runLoop() {
     let results = runGeneration(this.pathGeneration, this.points, this.lines);
     this.pathGeneration = results[3];
-    return recordPath(results[2], results[1], results[0], this.lines);
+    return [recordPath(results[2], results[1], results[0], this.lines), results[4]];
   }
 }
 
@@ -475,14 +475,14 @@ function runGeneration(pathGeneration, points, lines) {
 
   newGeneration.push(createMutant(bestPath));
 
-  let combinationPaths = crossPaths(newGeneration[0], newGeneration[1]);
+  let combinationPaths = crossPaths(bestPath, secondBestPath);
   combinationPaths.forEach(path => {
     newGeneration.push(path);
   });
 
   newGeneration.push(createMutant(bestPath));
 
-  return [bestPath, bestAngle, bestStartPoint, newGeneration];
+  return [bestPath, bestAngle, bestStartPoint, newGeneration, shortestDistance];
 }
 
 function randRange(min, max) {

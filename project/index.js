@@ -18,6 +18,9 @@ let badLines = [];
 let collisionDots = [];
 let pixels = [];
 
+let numDistStored = 10;
+let distances = [];
+
 let badLineTimer = -1;
 
 let lastClickX = -1;
@@ -48,7 +51,7 @@ function drawPixel(p) {
 
 
 let iteration = -1;
-function updateCanvas() {
+function updateScreen() {
 
   
   if (iteration === 0) {
@@ -59,12 +62,33 @@ function updateCanvas() {
     forestSolver.getPoints();
     forestSolver.populateGeneration();
     genCounter.textContent = "Generation 1";
-    pixels = forestSolver.runLoop();
-  } else if (iteration === 100) {
-    iteration = -1;
+    let results = forestSolver.runLoop();
+    pixels = results[0];
+    distances.push(results[1]);
+    updateDistanceList();
   } else if (iteration > 1) {
-    pixels = forestSolver.runLoop();
+    let results = forestSolver.runLoop();
+    pixels = results[0];
+    distances.push(results[1]);
+    updateDistanceList();
     genCounter.textContent = "Generation " + iteration;
+  }
+
+  if (distances.length > numDistStored) {
+    distances.splice(0, 1);
+  }
+
+  // The off conditions
+  if (distances.length === 10) {
+    if (distances[0] === distances[9]) {
+      iteration = -1;
+      resetButton.style.visibility = "";
+    }
+  }
+
+  if (iteration === 100) {
+    resetButton.style.visibility = "";
+    iteration = -1;
   }
 
   if (iteration > -1) {
@@ -183,13 +207,17 @@ c.addEventListener("mouseout", function (e) {
 
 
 // Keeping the canvas constantly updated
-setInterval(updateCanvas, 1);
+setInterval(updateScreen, 1);
 
 // HTML stuff
 const finishButton = document.getElementById('done_button');
 const clearButton = document.getElementById('clear_button');
 const solveButton = document.getElementById('solve_button');
+const resetButton = document.getElementById('reset');
+const distanceList = document.getElementById('distances');
+
 solveButton.style.visibility = "hidden";
+resetButton.style.visibility = "hidden";
 
 const runnningText = document.getElementById('running');
 runnningText.textContent = "";
@@ -197,6 +225,17 @@ runnningText.textContent = "";
 const genCounter = document.getElementById('genMarker');
 genCounter.textContent = "";
 
+function updateDistanceList() {
+  let htmlString = "<p>Shortest worst-case paths:</p>";
+  let loopLength = 8;
+  if (distances.length < 8) {
+    loopLength = distances.length;
+  }
+  for (let i = 0; i < loopLength; i++) {
+    htmlString += `<p>${distances[i]}</p>`;
+  }
+  distanceList.setHTMLUnsafe(htmlString);
+}
 
 finishButton.onclick = function() {
   let len = lines.length;
@@ -224,5 +263,24 @@ clearButton.onclick = function() {
 
 let forestSolver;
 solveButton.onclick = function() {
+  solveButton.style.visibility = "hidden";
+  finishButton.style.visibility = "hidden";
+  clearButton.style.visibility = "hidden";
+  
   iteration = 0;
+}
+
+resetButton.onclick = function() {
+  finishButton.style.visibility = "";
+  clearButton.style.visibility = "";
+  resetButton.style.visibility = "hidden";
+  lines = [];
+  pixels = [];
+  distances = [];
+  distanceList.setHTMLUnsafe("");
+  runnningText.textContent = "";
+  genCounter.textContent = "";
+  drawAble = true;
+  lastClickX = -1;
+  iteration = -1;
 }
