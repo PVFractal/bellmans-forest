@@ -164,7 +164,7 @@ setInterval(updateCanvas, 1);
 const finishButton = document.getElementById('done_button');
 const clearButton = document.getElementById('clear_button');
 const solveButton = document.getElementById('solve_button');
-// solveButton.style.visibility = "hidden";
+solveButton.style.visibility = "hidden";
 
 finishButton.onclick = function() {
   let len = lines.length;

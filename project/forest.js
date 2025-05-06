@@ -5,6 +5,10 @@ const NUM_ANGLES = 200;
 const NUM_RAYCASTS = 5;
 
 
+// Can change by 18 degrees at most
+const MAX_CHANGE = Math.PI / 10;
+
+
 const EPSILON = 0.001;
 const ROUNDING_EPSILON = EPSILON / 100;
 
@@ -128,52 +132,20 @@ export function solveForest(lines) {
   // Getting the starting points for the paths
   let points = getTestPoints(lines);
 
-  // Creating the first path, a straight line
-  let path = [];
-  for (let i = 0; i < PATH_SEGMENTS; i++) {
-    path.push(0);
+  let pathGeneration = [];
+
+  // Starting the generation with these paths
+  pathGeneration.push(createZeroPath());
+  for (let i = 0; i < 6; i++) {
+    pathGeneration.push(createRandomPath());
   }
 
-  let longestPath = 0;
-  let worstAngle = 0;
-  let worstPoint = new Point(0,0);
-
-
-  points.forEach(startPoint => {
-    
-    for (let i = 0; i < NUM_ANGLES; i++) {
-      let angle = ((Math.PI * 2) * i) / NUM_ANGLES;
-      let dist = runPath(startPoint, angle, path, lines);
+  let results;
+  for (let i = 0; i < 10; i++) {
+    results = runGeneration(pathGeneration, points, lines);
+  }
   
-      if (dist > longestPath && dist < MAX_DIST - 1) {
-        longestPath = dist;
-        worstAngle = angle;
-        worstPoint.x = startPoint.x;
-        worstPoint.y = startPoint.y;
-      }
-    }
-
-  });
-
-
-  console.log(longestPath);
-  console.log(worstAngle);
-
-  // let str = "let lines = [";
-  // for (let i = 0; i < lines.length; i++) {
-  //   str += "new Line(" + lines[i].x1 + ", " + lines[i].y1 + ", " + lines[i].x2 + ", " + lines[i].y2 + "), ";
-  // }
-  // str += "];"
-  // console.log(str);
-
-  // str = "let startPoint = new Point(" + worstPoint.x + ", " + worstPoint.y + ");";
-  // console.log(str);
-
-  // str = "let angle = " + worstAngle;
-
-  // console.log(str);
-
-  return recordPath(worstPoint, worstAngle, path, lines);
+  return recordPath(results[2], results[1], results[0], lines);
 }
 
 function getTestPoints(lines) {
@@ -298,6 +270,49 @@ function pointInsideLines(point, lines) {
   return numOdd > numEven;
 }
 
+function evaluatePath(path, points, lines) {
+  let longestPath = -1;
+  let worstAngle = 0;
+  let worstPoint = new Point(0,0);
+
+
+  points.forEach(startPoint => {
+    
+    for (let i = 0; i < NUM_ANGLES; i++) {
+      let angle = ((Math.PI * 2) * i) / NUM_ANGLES;
+      let dist = runPath(startPoint, angle, path, lines);
+  
+      if (dist > longestPath && dist < MAX_DIST - 1) {
+        longestPath = dist;
+        worstAngle = angle;
+        worstPoint.x = startPoint.x;
+        worstPoint.y = startPoint.y;
+      }
+    }
+
+  });
+
+  if (longestPath < 0) {
+    longestPath = MAX_DIST;
+  }
+
+  // let str = "let lines = [";
+  // for (let i = 0; i < lines.length; i++) {
+  //   str += "new Line(" + lines[i].x1 + ", " + lines[i].y1 + ", " + lines[i].x2 + ", " + lines[i].y2 + "), ";
+  // }
+  // str += "];"
+  // console.log(str);
+
+  // str = "let startPoint = new Point(" + worstPoint.x + ", " + worstPoint.y + ");";
+  // console.log(str);
+
+  // str = "let angle = " + worstAngle;
+
+  // console.log(str);
+
+  return [longestPath, worstAngle, worstPoint];
+}
+
 function runPath(startPoint, angle, path, lines) {
 
   let nextPoint = new Point(startPoint.x, startPoint.y);
@@ -370,6 +385,88 @@ function recordPath(startPoint, angle, path, lines) {
   } 
 
   return pointList;
+}
+
+function createRandomPath() {
+  let path = [];
+  for (let i = 0; i < PATH_SEGMENTS; i++) {
+    path.push(randRange(-MAX_CHANGE, MAX_CHANGE));
+  }
+  return path;
+}
+
+function createZeroPath() {
+  let path = [];
+  for (let i = 0; i < PATH_SEGMENTS; i++) {
+    path.push(0);
+  }
+  return path;
+}
+
+function createMutant(path) {
+  let newPath = [];
+  for (let i = 0; i < PATH_SEGMENTS; i++) {
+    let val = path[i] += randRange(-MAX_CHANGE, MAX_CHANGE);
+    newPath.push(val);
+  }
+  return newPath;
+}
+
+function crossPaths(path1, path2) {
+  let pathArray = [[],[],[],[]];
+  for (let i = 0; i < PATH_SEGMENTS; i++) {
+    for (let j = 0; j < pathArray.length; j++) {
+      let angleCross = randRange(path1[i], path2[i]);
+      pathArray[j].push(angleCross);
+    }
+  }
+  return pathArray;
+}
+
+function runGeneration(pathGeneration, points, lines) {
+  let shortestDistance = MAX_DIST;
+  let bestPath = [];
+  let bestStartPoint = new Point();
+  let bestAngle = 0;
+
+  let secondShortestDistance = MAX_DIST;
+  let secondBestPath = [];
+  let secondBestStartPoint = new Point();
+  let secondBestAngle = 0;
+
+  pathGeneration.forEach(path => {
+    let results = evaluatePath(path, points, lines);
+
+    let dist = results[0];
+
+    if (dist < shortestDistance) {
+      shortestDistance = dist;
+      bestPath = path;
+      bestAngle = results[1];
+      bestStartPoint = results[2];
+    } else if (dist < secondShortestDistance) {
+      secondShortestDistance = dist;
+      secondBestPath = path;
+      secondBestAngle = results[1];
+      secondBestStartPoint = results[2];
+    }
+  });
+
+  let newGeneration = [];
+
+  newGeneration.push(bestPath);
+
+  let combinationPaths = crossPaths(bestPath, secondBestPath);
+  combinationPaths.forEach(path => {
+    newGeneration.push(path);
+  });
+
+  newGeneration.push(createMutant(bestPath));
+  newGeneration.push(createMutant(bestPath));
+
+  pathGeneration = newGeneration;
+
+  return [bestPath, bestAngle, bestStartPoint];
 }
 
 function randRange(min, max) {
