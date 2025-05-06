@@ -1,6 +1,17 @@
-const POINTS_ON_LINES = 20;
+const POINTS_ON_LINES = 10;
 const POINTS_INSIDE_SHAPE = 200;
+const PATH_SEGMENTS = 100;
+const NUM_ANGLES = 200;
+const NUM_RAYCASTS = 5;
+
+
 const EPSILON = 0.001;
+const ROUNDING_EPSILON = EPSILON / 100;
+
+
+const CANVAS_SIZE = 400;
+const MAX_DIST = Math.sqrt(CANVAS_SIZE*CANVAS_SIZE*2);
+const SEGMENT_LENGTH = MAX_DIST / PATH_SEGMENTS;
 
 
 export class Line {
@@ -70,29 +81,25 @@ export class Line {
       lesserY2 = otherLine.y1;
     }
 
-    x = roundTo(x, 10);
-    y = roundTo(y, 10);
-
-    greaterX1 = roundTo(greaterX1, 10);
-    lesserX1 = roundTo(lesserX1, 10);
-    greaterX2 = roundTo(greaterX2, 10);
-    lesserX2 = roundTo(lesserX2, 10);
-
-    greaterY1 = roundTo(greaterY1, 10);
-    lesserY1 = roundTo(lesserY1, 10);
-    greaterY2 = roundTo(greaterY2, 10);
-    lesserY2 = roundTo(lesserY2, 10);
-
+    greaterX1 += ROUNDING_EPSILON;
+    lesserX1 -= ROUNDING_EPSILON;
+    greaterY1 += ROUNDING_EPSILON;
+    lesserY1 -= ROUNDING_EPSILON;
+    greaterX2 += ROUNDING_EPSILON;
+    lesserX2 -= ROUNDING_EPSILON;
+    greaterY2 += ROUNDING_EPSILON;
+    lesserY2 -= ROUNDING_EPSILON;
+    
     const isEndPoint = ((x === this.x1 && y === this.y1) || (x === this.x2 && y === this.y2) || (x === otherLine.x1 && y === otherLine.y1) || (x === otherLine.x2 && y === otherLine.y2));
 
     if (isEndPoint) {
-      return false;
+      return [x, y, 2];
     }
 
     if (x <= greaterX1 && x >= lesserX1 && y <= greaterY1 && y >= lesserY1 && x <= greaterX2 && x >= lesserX2 && y <= greaterY2 && y >= lesserY2) {
-      return [x, y];
+      return [x, y, 1];
     }
-    return false;
+    return [-1, -1, 0];
 
   }
 
@@ -117,8 +124,56 @@ export class Point {
 }
 
 export function solveForest(lines) {
+
+  // Getting the starting points for the paths
   let points = getTestPoints(lines);
-  return points;
+
+  // Creating the first path, a straight line
+  let path = [];
+  for (let i = 0; i < PATH_SEGMENTS; i++) {
+    path.push(0);
+  }
+
+  let longestPath = 0;
+  let worstAngle = 0;
+  let worstPoint = new Point(0,0);
+
+
+  points.forEach(startPoint => {
+    
+    for (let i = 0; i < NUM_ANGLES; i++) {
+      let angle = ((Math.PI * 2) * i) / NUM_ANGLES;
+      let dist = runPath(startPoint, angle, path, lines);
+  
+      if (dist > longestPath && dist < MAX_DIST - 1) {
+        longestPath = dist;
+        worstAngle = angle;
+        worstPoint.x = startPoint.x;
+        worstPoint.y = startPoint.y;
+      }
+    }
+
+  });
+
+
+  console.log(longestPath);
+  console.log(worstAngle);
+
+  // let str = "let lines = [";
+  // for (let i = 0; i < lines.length; i++) {
+  //   str += "new Line(" + lines[i].x1 + ", " + lines[i].y1 + ", " + lines[i].x2 + ", " + lines[i].y2 + "), ";
+  // }
+  // str += "];"
+  // console.log(str);
+
+  // str = "let startPoint = new Point(" + worstPoint.x + ", " + worstPoint.y + ");";
+  // console.log(str);
+
+  // str = "let angle = " + worstAngle;
+
+  // console.log(str);
+
+  return recordPath(worstPoint, worstAngle, path, lines);
 }
 
 function getTestPoints(lines) {
@@ -210,17 +265,111 @@ function getTestPoints(lines) {
 }
 
 function pointInsideLines(point, lines) {
-  let upLine = new Line(point.x, point.y, point.x, -1);
-  let collisions = 0;
-  for (let i = 0; i < lines.length; i++) {
-    let result = upLine.collidesWith(lines[i]);
-    if (result !== false) {
-      collisions += 1;
+
+  let numOdd = 0;
+  let numEven = 0;
+
+  for (let i = 0; i < NUM_RAYCASTS; i++) {
+    let angle = randRange(0, Math.PI * 2);
+
+    let farX = point.x + Math.cos(angle) * MAX_DIST;
+    let farY = point.y + Math.sin(angle) * MAX_DIST;
+
+    let raycast = new Line(point.x, point.y, farX, farY);
+    let collisions = 0;
+    for (let i = 0; i < lines.length; i++) {
+      let result = raycast.collidesWith(lines[i]);
+      if (result[2] === 1) {
+        collisions += 1;
+      }
+      if (result[2] === 2) {
+        return false;
+      }
     }
+
+    if (collisions % 2 === 1) {
+      numOdd += 1;
+    } else {
+      numEven += 1;
+    }
+
   }
-  // If the number of lines the downward line crossed was odd, that means it is inside the shape
-  // If it is even, that means it is outside the shape
-  return ((collisions % 2) === 1);
+
+  return numOdd > numEven;
+}
+
+function runPath(startPoint, angle, path, lines) {
+
+  let nextPoint = new Point(startPoint.x, startPoint.y);
+  let distance = 0;
+  for (let p = 0; p < PATH_SEGMENTS; p++) {
+
+    let xDist = Math.cos(path[p] + angle) * SEGMENT_LENGTH;
+    let yDist = Math.sin(path[p] + angle) * SEGMENT_LENGTH;
+
+    let nextX = nextPoint.x + xDist;
+    let nextY = nextPoint.y + yDist;
+
+    let colliderLine = new Line(nextPoint.x, nextPoint.y, nextX, nextY);
+    
+    for (let j = 0; j < lines.length; j++) {
+      let collision = colliderLine.collidesWith(lines[j]);
+      if (collision[2] == 1 || collision[2] == 2) {
+
+        // The path has reached the end of the forest
+        let shortDistX = collision[0] - nextPoint.x;
+        let shortDistY = collision[1] - nextPoint.y;
+        let finalDist = Math.sqrt(shortDistX*shortDistX + shortDistY*shortDistY);
+
+        // Adding the last bit of distance
+        distance += finalDist;
+        return distance;
+      }
+    }
+
+    // If we have not reached the end of the forest, we need to count the distance
+    distance += SEGMENT_LENGTH;
+
+    // Setting the next starting point
+
+    nextPoint.x = nextX;
+    nextPoint.y = nextY;
+
+  } 
+
+  return distance;
+}
+
+function recordPath(startPoint, angle, path, lines) {
+
+  let pointList = [];
+
+  let nextPoint = new Point(startPoint.x, startPoint.y);
+  for (let p = 0; p < PATH_SEGMENTS; p++) {
+
+    pointList.push(new Point(nextPoint.x, nextPoint.y));
+    
+    let xDist = Math.cos(path[p] + angle) * SEGMENT_LENGTH;
+    let yDist = Math.sin(path[p] + angle) * SEGMENT_LENGTH;
+
+    let nextX = nextPoint.x + xDist;
+    let nextY = nextPoint.y + yDist;
+
+    let colliderLine = new Line(nextPoint.x, nextPoint.y, nextX, nextY);
+
+    for (let j = 0; j < lines.length; j++) {
+      let collision = colliderLine.collidesWith(lines[j]);
+      if (collision[2] == 1 || collision[2] == 2) {
+        return pointList;
+      }
+    }
+    // Setting the next starting point
+    nextPoint.x = nextX;
+    nextPoint.y = nextY;
+
+  } 
+
+  return pointList;
 }
 
 function randRange(min, max) {

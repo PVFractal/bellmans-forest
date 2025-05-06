@@ -61,10 +61,10 @@ function updateCanvas() {
 
   ctx.fillStyle = "red";
   ctx.strokeStyle = "red";
+
   for (let i = 0; i < pixels.length; i++) {
     drawPixel(pixels[i]);
   }
-
 
   if (badLineTimer > 0) {
     badLineTimer -= 1;
@@ -89,7 +89,7 @@ function updateCanvas() {
 function collisionCheck(newLine) {
   for (let i = 0; i < lines.length; i++) {
     let result = newLine.collidesWith(lines[i]);
-    if (result) {
+    if (result[2] === 1) {
       collisionDots.push(result);
       badLines.push(lines[i]);
     }
@@ -164,7 +164,7 @@ setInterval(updateCanvas, 1);
 const finishButton = document.getElementById('done_button');
 const clearButton = document.getElementById('clear_button');
 const solveButton = document.getElementById('solve_button');
-solveButton.style.visibility = "hidden";
+// solveButton.style.visibility = "hidden";
 
 finishButton.onclick = function() {
   let len = lines.length;
@@ -192,5 +192,4 @@ clearButton.onclick = function() {
 
 solveButton.onclick = function() {
   pixels = solveForest(lines);
-  console.log(pixels.length);
 }
