@@ -10,8 +10,10 @@
 
   <h1 id = "title">Bellman's Forest Problem</h1>
 
-  <p>Draw forest boundary below</p>
-  <div id = "mainContainer">
+  
+  <p><b>Draw the forest boundary below</b></p>
+
+  <div class = "mainContainer">
     <div>
       <canvas id="maincanvas" width="400" height="400"></canvas>
     </div>
@@ -28,6 +30,30 @@
     </div>
     <div id = "distances"></div>
 
+  </div>
+
+  <div class = "lighter">
+    <h2>What is the forest problem?</h3>
+      <p>A mathematician called Richard Bellman posed a question: 
+        Suppose you found yourself lost in a forest. 
+        You know the size and shape of the forest, 
+        but you don't know where you are or what direction you are facing. 
+        What path should you take to get out of the forest that minimizes the distance you need to walk in the worst case?</p>
+
+      <p>For example, if you were in a circular forest, the best path is simply a straight path.</p>
+        <img src="images/circle_forest.png" alt = "circular forest" width="200"/>
+      <p>But if you were in a long, straight and narrow forest, going straight might not be a good idea, 
+        since the worst case is going from one end of the forest to the other. In that case, you might want to take a curving path, 
+        so that even in the worst starting position and direction, you get out fairly quickly.</p>
+        <img src="images/long_forest.png" alt = "paths through a long forest" width="200"/>
+        <p>Try creating your own forest in the square above! My algorithm will try and find the best path for that forest.
+          I use a <a href="https://en.wikipedia.org/wiki/Genetic_algorithm">genetic algorithm</a> to search for the path.
+          While the program doesn't find perfect solutions, it does come up with good solutions most of the time.
+        </p>
+
+        <p>See if you can come up with a forest shape where the best path isn't just a straight line!</p>
+
+        <p>(Note: the smaller the forest and the less sides it has, the quicker the program will run)</p>
   </div>
 
   <script type = "module" src="project/index.js"></script>

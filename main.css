@@ -25,9 +25,17 @@ button:hover {
   background-color: rgb(210, 210, 210);
 }
 
-#mainContainer{
+
+.lighter {
+  background-color: rgb(243, 243, 243);
+  width: 75%;
+  margin: 15px;
+  padding: 15px;
+}
+.mainContainer{
   background-color: white;
   display: flex;
+  width: fit-content;
   gap: 30px;
   padding: 30px;
   border: 2px solid rgb(19, 21, 63);
